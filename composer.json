@@ -1,6 +1,6 @@
 {
-    "name": "arbeeducacao/text-helpers",
-    "description": "Serviço de manipulação de texto de alta performance para projetos Arbe em Laravel.",
+    "name": "devopsadmins/text-helpers",
+    "description": "Serviço de manipulação de texto de alta performance para projetos em Laravel.",
     "license": "MIT",
     "authors": [
         {
