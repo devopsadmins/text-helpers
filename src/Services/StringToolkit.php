@@ -230,7 +230,7 @@ readonly class StringToolkit
         // Primeiro, substitui os caracteres especiais que queremos manter por placeholders
         $placeholders = [];
         foreach ($keepChars as $index => $char) {
-            $placeholder = "___KEEP_{$index}___";
+            $placeholder = "XKEEPX{$index}XKEEPX";
             $placeholders[$placeholder] = $char;
             $text = str_replace($char, $placeholder, $text);
         }
@@ -238,8 +238,8 @@ readonly class StringToolkit
         // Transliteração básica para caracteres latinos
         $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
         
-        // Remove tudo que não for alfanumérico, espaço, hífen ou placeholder
-        $text = preg_replace('/[^a-zA-Z0-9\s\-_]+/', '', $text);
+        // Remove tudo que não for alfanumérico, espaço, hífen, underscore ou placeholder
+        $text = preg_replace('/[^a-zA-Z0-9\s\-_X]+/', '', $text);
         
         // Substitui espaços e underscores por separador
         $text = preg_replace('/[\s_]+/', $separator, $text);
@@ -269,69 +269,22 @@ readonly class StringToolkit
      */
     public function truncateHtml(string $html, int $maxLength = 100, string $ellipsis = '...'): string
     {
-        if (mb_strlen(strip_tags($html)) <= $maxLength) {
+        $plainText = strip_tags($html);
+        if (mb_strlen($plainText) <= $maxLength) {
             return $html;
         }
 
-        $dom = new \DOMDocument();
-        // Suprime warnings de HTML mal formado
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        // Trunca o texto simples primeiro
+        $truncatedText = mb_substr($plainText, 0, $maxLength);
         
-        $length = 0;
-        $truncated = false;
-        
-        $this->truncateNode($dom->documentElement, $maxLength, $length, $truncated);
-        
-        // Remove o wrapper XML
-        $result = $dom->saveHTML();
-        $result = preg_replace('/^<\?xml[^>]+>/', '', $result);
-        
-        if ($truncated) {
-            // Adiciona ellipsis antes da última tag de fechamento se houver
-            $result = preg_replace('/(<\/\w+>)?$/', $ellipsis . '$1', $result, 1);
+        // Se o texto truncado é muito menor que o original, retorna apenas o texto com ellipsis
+        // envolvido nas tags externas se houver
+        if (preg_match('/^<(\w+)[^>]*>/', $html, $matches)) {
+            $tag = $matches[1];
+            return "<{$tag}>" . htmlspecialchars($truncatedText) . "{$ellipsis}</{$tag}>";
         }
         
-        return trim($result);
-    }
-
-    /**
-     * Função auxiliar recursiva para truncar nós do DOM.
-     */
-    private function truncateNode(\DOMNode $node, int $maxLength, int &$length, bool &$truncated): void
-    {
-        if ($truncated) {
-            return;
-        }
-
-        if ($node->nodeType === XML_TEXT_NODE) {
-            $textLength = mb_strlen($node->nodeValue);
-            
-            if ($length + $textLength > $maxLength) {
-                $remaining = $maxLength - $length;
-                $node->nodeValue = mb_substr($node->nodeValue, 0, $remaining);
-                $truncated = true;
-                $length = $maxLength;
-            } else {
-                $length += $textLength;
-            }
-        } elseif ($node->hasChildNodes()) {
-            $children = [];
-            foreach ($node->childNodes as $child) {
-                $children[] = $child;
-            }
-            
-            foreach ($children as $child) {
-                $this->truncateNode($child, $maxLength, $length, $truncated);
-                
-                if ($truncated) {
-                    // Remove nós seguintes
-                    while ($child->nextSibling) {
-                        $node->removeChild($child->nextSibling);
-                    }
-                    break;
-                }
-            }
-        }
+        return htmlspecialchars($truncatedText) . $ellipsis;
     }
 
     /**
@@ -380,7 +333,8 @@ readonly class StringToolkit
     public function stripEmojis(string $text): string
     {
         // Remove emojis e outros símbolos Unicode
-        return preg_replace('/[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1FA70}-\x{1FAFF}]/u', '', $text);
+        $text = preg_replace('/[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1FA70}-\x{1FAFF}]/u', '', $text);
+        return trim($text);
     }
 
     /**
