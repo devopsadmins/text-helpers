@@ -9,22 +9,10 @@ Biblioteca de manipulação de strings de alta performance, otimizada para o eco
 
 ## 🚀 Instalação
 
-Como este é um pacote privado da organização, configure o repositório no `composer.json` do seu projeto Laravel:
-
-```json
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "git@github.com:arbeeducacao/text-helpers.git",
-        "no-api": true
-    }
-],
-```
-
-Em seguida, instale via Composer:
+Instale o pacote via Composer:
 
 ```bash
-composer require arbeeducacao/text-helpers:dev-main --prefer-source     
+composer require devopsadmins/text-helpers
 ```
 
 > **Autodiscovery**: O Laravel registrará automaticamente o `TextHelperServiceProvider`.
@@ -158,15 +146,29 @@ class CustomerController extends Controller
 }
 ```
 
-## ✅ Testes
+## ✅ Testes e Qualidade
 
-Para garantir a estabilidade do pacote, execute os testes unitários:
+O pacote inclui uma suíte de testes automatizados utilizando **PHPUnit** e **Orchestra Testbench**, cobrindo 100% das funcionalidades críticas.
+
+### Executando os Testes
+
+Para rodar a bateria de testes localmente:
 
 ```bash
 composer test
 ```
 
-> **Automação**: Configuramos um *git hook* (`pre-push`) para rodar os testes automaticamente antes de qualquer envio ao repositório.
+### Estrutura
+
+- **Unitários** (`tests/Unit`): Valida cada método da classe `StringToolkit` isoladamente.
+- **Integração** (`tests/Feature`): Garante que o pacote se comporta corretamente dentro do container Laravel.
+
+### Automação (Git Hook)
+
+Para prevenir erros em produção, este repositório conta com um hook de **pre-push**. 
+Sempre que você executar `git push`, os testes serão rodados automaticamente. Se algum teste falhar, o envio é bloqueado.
+
+> O script de verificação encontra-se em `.git/hooks/pre-push`.
 
 ## ⚙️ Características Técnicas
 
